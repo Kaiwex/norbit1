@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор стоимости судна</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4b6cb7, #182848);
+            overflow-y: auto;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 480px;
+            padding: 40px 30px;
+            box-sizing: border-box;
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        h2 {
+            font-family: 'Roboto Slab', serif;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+            input:focus, select:focus {
+                border-color: #4CAF50;
+                box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+            }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+            button:hover {
+                background-color: #45a049;
+                transform: translateY(-3px);
+            }
+
+        h3 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .result {
+            font-size: 28px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 30px;
+        }
+
+        .feedback-container {
+            margin-top: 30px;
+        }
+
+            .feedback-container input, .feedback-container textarea {
+                width: 100%;
+                padding: 10px;
+                margin: 5px 0;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+
+            .feedback-container button {
+                background-color: #ff9800;
+                color: white;
+                padding: 10px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+                .feedback-container button:hover {
+                    background-color: #f57c00;
+                }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            h3 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Калькулятор стоимости строительства судна</h2>
+
+        <form id="shipForm">
+            <label for="length">Длина (м):</label>
+            <input type="number" id="length" required>
+
+            <label for="width">Ширина (м):</label>
+            <input type="number" id="width" required>
+
+            <label for="height">Высота (м):</label>
+            <input type="number" id="height" required>
+
+            <label for="material">Материал:</label>
+            <select id="material" required>
+                <option value="Steel">Сталь (150 $/м³)</option>
+                <option value="Aluminum">Алюминий (250 $/м³)</option>
+                <option value="Wood">Дерево (80 $/м³)</option>
+            </select>
+
+            <label for="shipType">Тип судна:</label>
+            <select id="shipType" required>
+                <option value="Cargo">Грузовое</option>
+                <option value="Passenger">Пассажирское</option>
+                <option value="Fishing">Рыболовецкое</option>
+            </select>
+
+            <label for="currency">Валюта:</label>
+            <select id="currency" required>
+                <option value="USD">Доллар США (USD)</option>
+                <option value="EUR">Евро (EUR)</option>
+                <option value="RUB">Рубль (₽)</option>
+            </select>
+
+            <button type="submit">Рассчитать</button>
+        </form>
+
+        <h3>Общая стоимость: <span class="result" id="result">$0</span></h3>
+        <div class="error-message" id="error-message"></div>
+
+        <!-- График стоимости -->
+        <div class="chart-container" id="chart-container" style="display: none;">
+            <canvas id="costChart"></canvas>
+        </div>
+
+        <!-- Добавление отзыва -->
+        <div class="feedback-container">
+            <h3>Ваш отзыв:</h3>
+            <textarea id="feedback" rows="4" placeholder="Оставьте свой отзыв о калькуляторе"></textarea>
+            <button id="submitFeedback">Отправить отзыв</button>
+        </div>
+
+        <!-- Ссылка на страницу с отзывами -->
+        <div>
+            <a href="reviews.html">Посмотреть все отзывы</a>
+        </div>
+    </div>
+
+    <script>
+        // Сохранение отзыва в localStorage
+        document.getElementById('submitFeedback').addEventListener('click', function () {
+            const feedback = document.getElementById('feedback').value;
+            if (feedback) {
+                let feedbacks = JSON.parse(localStorage.getItem('feedbacks')) || [];
+                feedbacks.push(feedback);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+                alert('Спасибо за ваш отзыв!');
+                document.getElementById('feedback').value = '';  // Очистить поле ввода
+            } else {
+                alert('Пожалуйста, напишите отзыв.');
+            }
+        });
+
+        document.getElementById('shipForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем перезагрузку страницы
+
+            const length = parseFloat(document.getElementById('length').value);
+            const width = parseFloat(document.getElementById('width').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const material = document.getElementById('material').value;
+            const shipType = document.getElementById('shipType').value;
+            const currency = document.getElementById('currency').value;
+
+            document.getElementById('error-message').textContent = '';
+
+            if (!length || !width || !height) {
+                document.getElementById('error-message').textContent = 'Пожалуйста, заполните все поля!';
+                return;
+            }
+
+            let materialCost, shipCostFactor;
+
+            switch (material) {
+                case 'Steel': materialCost = 150; break;
+                case 'Aluminum': materialCost = 250; break;
+                case 'Wood': materialCost = 80; break;
+                default: materialCost = 150;
+            }
+
+            switch (shipType) {
+                case 'Cargo': shipCostFactor = 1.5; break;
+                case 'Passenger': shipCostFactor = 2; break;
+                case 'Fishing': shipCostFactor = 1.2; break;
+                default: shipCostFactor = 1;
+            }
+
+            const volume = length * width * height;
+            let totalCost = volume * materialCost * shipCostFactor;
+            totalCost = totalCost * 1.05;
+
+            let currencySymbol;
+            if (currency === 'EUR') {
+                totalCost *= 0.85; currencySymbol = '€';
+            } else if (currency === 'RUB') {
+                totalCost *= 75; currencySymbol = '₽';
+            } else {
+                currencySymbol = '$';
+            }
+
+            document.getElementById('result').textContent = `${currencySymbol}${totalCost.toFixed(2)}`;
+
+            document.getElementById('chart-container').style.display = 'block';
+            const ctx = document.getElementById('costChart').getContext('2d');
+            const costChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Стоимость'],
+                    datasets: [{
+                        label: 'Стоимость строительства судна',
+                        data: [totalCost],
+                        backgroundColor: ['rgba(76, 175, 80, 0.5)'],
+                        borderColor: ['rgba(76, 175, 80, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

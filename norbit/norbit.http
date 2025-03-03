@@ -1,0 +1,6 @@
+@norbit_HostAddress = http://localhost:5281
+
+GET {{norbit_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
